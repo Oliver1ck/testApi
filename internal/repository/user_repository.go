@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/Oliver1ck/testApi/internal/models"
 )
@@ -25,7 +26,22 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 
 func (r *userRepository) CreateUser(user *models.User) (*models.User, error) {
-  
+  query := `
+		INSERT INTO users (username, email, password_hash, created_at)
+		VALUES ($1, $2, $3, NOW())
+		RETURNING id, created_at
+	`
+	
+	err := r.db.QueryRow(
+		query,
+		user.Username,
+		user.Email,
+		user.Password,
+	).Scan(&user.ID, &user.CreatedAt)
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
   return user, nil
 }
 

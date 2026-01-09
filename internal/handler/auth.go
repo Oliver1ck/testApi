@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Oliver1ck/testApi/internal/models"
 	"github.com/Oliver1ck/testApi/internal/repository"
@@ -13,15 +14,19 @@ import (
 type AuthHandler struct {
 	userRepo repository.UserRepository
 }
-
-// Конструктор
+type ResponseUser struct {
+	ID         int    `json:"id"`
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	CreatedAt  time.Time `json:"created_at"`
+}
 func NewAuthHandler(userRepo repository.UserRepository) *AuthHandler {
 	return &AuthHandler{
 		userRepo: userRepo,
 	}
 }
 
-type responseUser struct {
+type RequestUser struct {
 	UserName string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -34,7 +39,7 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req responseUser
+	var req RequestUser
 	err := json. NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("ошибка декодирования:  %v", err), http.StatusBadRequest)
@@ -52,7 +57,7 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := &models. User{
+	user := &models.User{
 		Username: req. UserName,
 		Email:    req.Email,
 		Password: string(hashedPassword),
@@ -64,11 +69,11 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
-		"id":         createdUser.ID,
-		"username":   createdUser.Username,
-		"email":      createdUser.Email,
-		"created_at":  createdUser.CreatedAt,
+	response := ResponseUser{
+		createdUser.ID,
+		createdUser.Username,
+		createdUser.Email,
+		createdUser.CreatedAt,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
